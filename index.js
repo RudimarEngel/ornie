@@ -1,7 +1,14 @@
+// require('app-module-path').addPath(`${__dirname}`);
 const http = require('http');
 
-http.createServer(function(req, res) {
+global.config = require('./config.json');
+
+const server = http.createServer(function(req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'})
   res.end('Hello World!');
   
-}).listen(3001);
+});
+
+server.listen(global.config.server.port, () => {
+  console.log(`Servidor iniciou em http://${global.config.server.host}:${global.config.server.port}`)
+})
