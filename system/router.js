@@ -1,32 +1,56 @@
 
+const AllowedMethods = ['GET', 'POST', 'DELETE', 'PUT', 'PATCH']
 
 module.exports = class Router {
 
-  // PUBLIC
+  // PUBLIC --------------------------------------------------------------------------------
   static async run(req, res){
-    console.log('AAAAAAAAAAAAA')
 
+    if (!await this.#isMethodAllowed(req.method)) {
+      return this.#respond(405, `${req.method} não é permitido!`)
+    }
 
     const route = await Router.#getRoute(req, res)
-    console.log('route: ', route)
+    
+    if(!route) {return Router.#respond(404, 'Rota inválida!', res)}
+
+    // controller
+    const path = `../ctrl/${route.controller}`
+    
+
+    try {
+      const arquivo = require.resolve(path) // verifica se o arquivo existe
+      
+    } catch {
+      
+      return Router.#respond(404, `Rota inválida: ${route.url}`, res)
+    }
+
+    const Ctrl = require(path)
+    const ctrl = new Ctrl(req, res)
+    ctrl._dispatch(route)
+
   }
 
-  // PRIVATE
+  // PRIVATE ----------------------------------------------------------------------------
+
+  static async #isMethodAllowed(mehod) {
+    return (AllowedMethods.indexOf(mehod) >= 0)
+  }
+
   static async #getRoute(req, res) {
-    console.log('req.url: ', req.url)
 
     const url = req.url.split('/')
-    console.log('url: ', url)
-    // exige ao menso o controle e o método
+    // exige ao menos o controle e o método
     if(url.length < 3 ) return null;
 
     const actionParams = await Router.#getActionParams(req, res, url)
-    console.log('actionParams: ', actionParams)
 
     const route = {
       url: req.url,
       controller: url[1],
-      // action
+      action: actionParams.action,
+      params: actionParams.params
     }
 
     return route
@@ -39,15 +63,33 @@ module.exports = class Router {
       params: undefined
     }
 
-    console.log('req.method: ', req.method)
-    console.log('actionParams.action: ', actionParams.action)
-
-    // quer string?
-    if (req.method === 'GET' && actionParams.action ) {
+    // 
+    if (req.method === 'GET' && actionParams.action.indexOf('?') > 0 ) {
       let parts  = actionParams.action.split('?')
+      
 
-      console.log('parts: ', parts)
+      actionParams.action = parts[0]
+      actionParams.params = [{}]
+      parts = parts[1].split('&')
+      
+      parts.forEach((item) => {
+        const pair = item.split('=')
+        
+        if (pair.length < 2) { return;}
+        actionParams.params[0][pair[0]] = decodeURI(pair[1])
+      })
     }
+    // GET vazio, DELETE, POST, PUT, PATCH
+
+
+    return actionParams
 
   }
+
+  static #respond(statusCode, message, response) {
+    response.statusCode = statusCode;
+    response.end(message);
+  }
+
+  
 }
