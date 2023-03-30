@@ -16,7 +16,7 @@ module.exports = class Controller{
   }
 
   result(statusCode, content, mimeType = enums.MimeType.Json) {
-    const data = (typeof (content) === 'object') ? JSON.strongfy(content) : content;
+    const data = (typeof (content) === 'object') ? JSON.stringify(content) : content;
 
     this.response.statusCode = statusCode;
     this.response.setHeader('Content-Type', enums.MimeType.toString(mimeType))
