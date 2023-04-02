@@ -9,7 +9,12 @@ module.exports = class Controller{
     this.#anonymousMethods = anonymousMethods ? `,${anonymousMethods},` : null;
   }
 
-  get response() { return this.#response;}
+  get response() {  return this.#response;}
+
+  get model() {
+    if( !this.#model) { this.#model = this._createModel(this.constructor.name.replace('Ctrl', ''))}
+    return this.#model
+  }
 
   error(statusCode, message = 'Não foi possível completar a operação!') {
     this.result(statusCode, message, enums.MimeType.Text)
@@ -35,6 +40,23 @@ module.exports = class Controller{
     if (route.params === undefined) { this[route.action]();}
     else { this[route.action](...route.params)}
 
+    // this.model.audition()
+
+  }
+
+  _createModel(name) {
+    
+    const path = `../model/${name.toLowerCase()}`
+    let Model
+    
+    try {  
+      Model = require(path);
+    } catch {
+      Model = require('./model');
+    }
+
+    return new Model()
+
   }
 
   // PRIVATE ----------------
@@ -44,5 +66,7 @@ module.exports = class Controller{
   #response;
 
   #anonymousMethods;
+
+  #model;
 
 }

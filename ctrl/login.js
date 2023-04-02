@@ -9,8 +9,9 @@ module.exports = class LoginCtrl extends Controller {
 
 
   async enter(body) {
-    // console.log('body: ', body)
+    const answer  = await this.model.makeLogin(body)
+    console.log('answer: ', answer)
 
-    this.result(200, body)
+    this.result(200, {result: answer})
   }
 }
